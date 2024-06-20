@@ -33,7 +33,7 @@ The `translate_command` script utilizes OpenAI's API to translate natural langua
 
    ```bash
    python -m venv venv
-   source venv/bin/activate   # On Windows use `venv\Scripts\activate`
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 
@@ -62,10 +62,10 @@ The `translate_command` script utilizes OpenAI's API to translate natural langua
    Add the alias at the end of the file:
 
    ```bash
-   alias lnl='python /path/to/translate_command.py'
+   alias lnl='path/to/venv/bin/python -m linux_with_natural_language'
    ```
 
-   Replace `/path/to/translate_command.py` with the actual path to your `translate_command.py` script.
+   Replace `/path/to/venv/bin/python` with the actual path to your `venv/bin/python`.
 
 5. **Save and Reload Configuration**
 
