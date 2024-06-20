@@ -1,4 +1,4 @@
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 import subprocess
 import click
@@ -9,9 +9,16 @@ SYSTEM_PROMPT = """
     You must reply with only the linux command. Nothing else!" Ensure your response consists solely of the Linux command required to fulfill the task.
     """
 
-load_dotenv()  # Load environment variables from .env file
+# Load environment variables from .env file and the environment
+load_dotenv(find_dotenv())
 
 api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    raise ValueError(
+        "OPENAI_API_KEY not found. Please set it in the environment or in a .env file."
+    )
+
 
 client = OpenAI(api_key=api_key)
 
