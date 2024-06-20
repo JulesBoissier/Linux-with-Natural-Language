@@ -1,10 +1,14 @@
-Sure! Here's an updated version of the Markdown file with additional information about setting up an alias and demonstrating usage with the `lnl` command:
-
----
-
 # Using and Setting Up Translate Command Script
 
 The `translate_command` script utilizes OpenAI's API to translate natural language commands into executable Linux commands. It optionally provides explanations and allows execution of the translated command.
+
+### TODOs:
+
+    - Add safety feature to block dangerous commands.
+    - Add more context to system prompt, specifically:
+        - Distro.
+        - Location in file structure.
+        - Available packages.
 
 ### Prerequisites
 
