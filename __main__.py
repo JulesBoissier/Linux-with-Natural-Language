@@ -1,9 +1,6 @@
 from dotenv import load_dotenv
 import os
 import subprocess
-import tempfile
-
-
 import click
 from openai import OpenAI
 
@@ -16,12 +13,10 @@ load_dotenv()  # Load environment variables from .env file
 
 api_key = os.getenv("OPENAI_API_KEY")
 
-
-client = OpenAI()
+client = OpenAI(api_key=api_key)
 
 
 def explain_command(command: str, model: str):
-
     response = client.chat.completions.create(
         model=model,
         messages=[
@@ -52,7 +47,12 @@ def explain_command(command: str, model: str):
 @click.option(
     "--sudo/--no-sudo", default=False, help="Enable sudo mode for translation."
 )
-def translate_command(query, model=None, explain=False, trust=False, sudo=False):
+@click.option(
+    "--timeout", default=30, help="Specify a timeout for the command execution."
+)
+def translate_command(
+    query, model=None, explain=False, trust=False, sudo=False, timeout=30
+):
 
     response = client.chat.completions.create(
         model=model,
@@ -62,18 +62,46 @@ def translate_command(query, model=None, explain=False, trust=False, sudo=False)
         ],
     )
 
-    # # Extract the content from the response
+    # Extract the content from the response
     translated_command = response.choices[0].message.content.strip()
+
+    # Clean up the command: remove unnecessary formatting
+    translated_command = (
+        translated_command.replace("```bash", "").replace("```", "").strip()
+    )
 
     if sudo:
         translated_command = "sudo " + translated_command
 
-    print(translated_command)
+    print("Translated command: ", translated_command)
 
     if explain:
-        print(explain_command(translated_command, model=model))
+        explanation = explain_command(translated_command, model=model)
+        print("Explanation: ", explanation)
+
+    if trust or input("Run command? (Y/N): ").strip().lower() == "y":
+        # Run command with timeout
+        try:
+            result = subprocess.run(
+                translated_command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            print("Command output:")
+            print(result.stdout)
+            if result.stderr:
+                print("Command error output:")
+                print(result.stderr)
+        except subprocess.TimeoutExpired:
+            print(f"Command timed out after {timeout} seconds")
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed with return code {e.returncode}")
+            print(f"stderr: {e.stderr}")
+        except Exception as e:
+            print(f"An error occurred while running the command: {e}")
 
 
 if __name__ == "__main__":
-
     translate_command()
