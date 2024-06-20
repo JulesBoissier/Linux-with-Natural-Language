@@ -84,7 +84,7 @@ def translate_command(
 
     if explain:
         explanation = explain_command(translated_command, model=model)
-        print("Explanation: ", explanation)
+        print("Explanation: \n", explanation)
 
     if trust or input("Run command? (Y/N): ").strip().lower() == "y":
         # Run command with timeout
