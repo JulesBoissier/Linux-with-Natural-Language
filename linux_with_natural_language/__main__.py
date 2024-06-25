@@ -37,57 +37,16 @@ def explain_command(command: str, model: str):
 
     explanation = response.choices[0].message.content.strip()
 
-    return explanation
+    print("Explanation: \n", explanation)
 
+def strip_bash_artefacts(translated_command : str):
+    return translated_command.replace("```bash", "").replace("```", "").strip()
 
-@click.command()
-@click.argument("query", type=str)
-@click.option(
-    "--model", default="gpt-3.5-turbo", help="Specify the model to use for translation."
-)
-@click.option(
-    "--explain/--no-explain", default=False, help="Enable explanation of translation."
-)
-@click.option(
-    "--trust/--no-trust", default=False, help="Enable trusted mode for translation."
-)
-@click.option(
-    "--sudo/--no-sudo", default=False, help="Enable sudo mode for translation."
-)
-@click.option(
-    "--timeout", default=30, help="Specify a timeout for the command execution."
-)
-def translate_command(
-    query, model=None, explain=False, trust=False, sudo=False, timeout=30
-):
+def add_sudo_prefix(translated_command : str):
+    return 'sudo ' + translated_command
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": query},
-        ],
-    )
-
-    # Extract the content from the response
-    translated_command = response.choices[0].message.content.strip()
-
-    # Clean up the command: remove unnecessary formatting
-    translated_command = (
-        translated_command.replace("```bash", "").replace("```", "").strip()
-    )
-
-    if sudo:
-        translated_command = "sudo " + translated_command
-
-    print("Translated command: ", translated_command)
-
-    if explain:
-        explanation = explain_command(translated_command, model=model)
-        print("Explanation: \n", explanation)
-
-    if trust or input("Run command? (Y/N): ").strip().lower() == "y":
-        # Run command with timeout
+def execute_command(translated_command : str, timeout : int):
+    # Run command with timeout
         try:
             result = subprocess.run(
                 translated_command,
@@ -109,6 +68,51 @@ def translate_command(
         except Exception as e:
             print(f"An error occurred while running the command: {e}")
 
+@click.command()
+@click.argument("query", type=str)
+@click.option(
+    "--model", default="gpt-3.5-turbo", help="Specify the model to use for translation."
+)
+@click.option(
+    "--explain/--no-explain", default=False, help="Enable explanation of translation."
+)
+@click.option(
+    "--trust/--no-trust", default=False, help="Enable trusted mode for translation."
+)
+@click.option(
+    "--sudo/--no-sudo", default=False, help="Enable sudo mode for translation."
+)
+@click.option(
+    "--timeout", default=30, help="Specify a timeout for the command execution."
+)
+def translate_command(
+    query, model=None, explain=False, trust=False, sudo=False, timeout=30
+):
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": query},
+        ],
+    )
+    # Extract the content from the response
+    translated_command = response.choices[0].message.content.strip()
+
+    # Clean up the command: remove unnecessary formatting
+    translated_command = strip_bash_artefacts(translated_command)
+
+    if sudo:
+        translated_command = add_sudo_prefix(translated_command)
+
+    print("Translated command: ", translated_command)
+
+    if explain:
+        explain_command(translated_command, model=model)
+
+    if trust or input("Run command? (Y/N): ").strip().lower() == "y":
+        execute_command(translated_command = translated_command, timeout = timeout)
+
+    return translated_command
 
 if __name__ == "__main__":
     translate_command()
