@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 
-# from __main__ import translate_command
-from linux_with_natural_language.__main__ import translate_command
+from __main__ import translate_command
 
 class TestTranslateCommand(unittest.TestCase):
 
