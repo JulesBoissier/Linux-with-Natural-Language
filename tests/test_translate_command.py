@@ -65,7 +65,7 @@ class TestTranslateCommand(unittest.TestCase):
     @patch("builtins.print")
     @patch("src.translate_command.explain_command", side_effect=explain_command)
     @patch("src.translate_command.execute_command")
-    def test_translate_command_explanation(
+    def test_command_explanation(
         self,
         mock_execute_command,
         mock_explain_command,
@@ -116,3 +116,103 @@ class TestTranslateCommand(unittest.TestCase):
 
         # Check if the translated command was processed correctly
         self.assertEqual(translated_command, "ls -la")
+
+    @patch("src.translate_command.client.chat.completions.create")
+    @patch("builtins.input", return_value="y")
+    @patch("builtins.print")
+    @patch("src.translate_command.explain_command")
+    @patch("src.translate_command.execute_command")
+    def test_command_exec_if_trust(
+        self,
+        mock_execute_command,
+        mock_explain_command,
+        mock_print,
+        mock_input,
+        mock_create,
+    ):
+
+        query = "List all files"
+        model = "test-model"
+        explain = False
+        trust = True
+        sudo = False
+        timeout = 30
+
+        mock_create.return_value = self._mock_create_call(
+            response="```bash\nls -la\n```"
+        )
+
+        translated_command = translate_command(
+            query, model=model, explain=explain, trust=trust, sudo=sudo, timeout=timeout
+        )
+
+        # Check if the execute_command was called with the correct parameters
+        mock_execute_command.assert_called_once_with(
+            translated_command="ls -la", timeout=timeout
+        )
+
+    @patch("src.translate_command.client.chat.completions.create")
+    @patch("builtins.input", return_value="y")
+    @patch("builtins.print")
+    @patch("src.translate_command.explain_command")
+    @patch("src.translate_command.execute_command")
+    def test_command_exec_if_input_yes(
+        self,
+        mock_execute_command,
+        mock_explain_command,
+        mock_print,
+        mock_input,
+        mock_create,
+    ):
+
+        query = "List all files"
+        model = "test-model"
+        explain = False
+        trust = False
+        sudo = False
+        timeout = 30
+
+        mock_create.return_value = self._mock_create_call(
+            response="```bash\nls -la\n```"
+        )
+
+        translated_command = translate_command(
+            query, model=model, explain=explain, trust=trust, sudo=sudo, timeout=timeout
+        )
+
+        # Check if the execute_command was called with the correct parameters
+        mock_execute_command.assert_called_once_with(
+            translated_command="ls -la", timeout=timeout
+        )
+
+    @patch("src.translate_command.client.chat.completions.create")
+    @patch("builtins.input", return_value="n")
+    @patch("builtins.print")
+    @patch("src.translate_command.explain_command")
+    @patch("src.translate_command.execute_command")
+    def test_no_command_exec(
+        self,
+        mock_execute_command,
+        mock_explain_command,
+        mock_print,
+        mock_input,
+        mock_create,
+    ):
+
+        query = "List all files"
+        model = "test-model"
+        explain = False
+        trust = False
+        sudo = False
+        timeout = 30
+
+        mock_create.return_value = self._mock_create_call(
+            response="```bash\nls -la\n```"
+        )
+
+        translated_command = translate_command(
+            query, model=model, explain=explain, trust=trust, sudo=sudo, timeout=timeout
+        )
+
+        # Check if the execute_command was called with the correct parameters
+        mock_execute_command.assert_not_called()
